@@ -766,16 +766,17 @@ body.mode-applications { background:var(--deep); color:var(--white); font-family
     </div>
     <div class="contact-form">
       <div class="form-row">
-        <div class="form-group"><label>First Name</label><input type="text" placeholder="John" /></div>
-        <div class="form-group"><label>Last Name</label><input type="text" placeholder="Smith" /></div>
+        <div class="form-group"><label>First Name</label><input type="text" id="cf-first-name" placeholder="John" /></div>
+        <div class="form-group"><label>Last Name</label><input type="text" id="cf-last-name" placeholder="Smith" /></div>
       </div>
-      <div class="form-group"><label>Email Address</label><input type="email" placeholder="john@company.com" /></div>
-      <div class="form-group"><label>Country / Island</label><input type="text" placeholder="e.g. Barbados" /></div>
+      <div class="form-group"><label>Email Address</label><input type="email" id="cf-email" placeholder="john@company.com" /></div>
+      <div class="form-group"><label>Country / Island</label><input type="text" id="cf-island" placeholder="e.g. Barbados" /></div>
       <div class="form-group"><label>Product Interest</label>
-        <select><option value="">Select a category</option><option>Floating Dock Systems</option><option>Other / General Enquiry</option></select>
+        <select id="cf-interest"><option value="">Select a category</option><option>Floating Dock Systems</option><option>Other / General Enquiry</option></select>
       </div>
-      <div class="form-group"><label>Message</label><textarea placeholder="Describe your project or requirements..."></textarea></div>
-      <button class="btn-primary" type="button">Send Enquiry →</button>
+      <div class="form-group"><label>Message</label><textarea id="cf-message" placeholder="Describe your project or requirements..."></textarea></div>
+      <button class="btn-primary" type="button" onclick="sendEnquiry()">Send Enquiry →</button>
+      <p id="cf-status" style="font-size:0.78rem;color:var(--muted);margin-top:0.4rem;min-height:1.1em;"></p>
     </div>
   </section>
 
@@ -1734,6 +1735,58 @@ function goTo(pageId, anchorId) {
   }
 }
 window.goTo = goTo;
+
+function sendEnquiry() {
+  const val = function (id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  };
+
+  const firstName = val('cf-first-name');
+  const lastName = val('cf-last-name');
+  const email = val('cf-email');
+  const island = val('cf-island');
+  const interest = val('cf-interest');
+  const message = val('cf-message');
+
+  const statusEl = document.getElementById('cf-status');
+
+  if (!firstName || !email || !message) {
+    if (statusEl) statusEl.textContent = 'Please fill in your name, email, and message before sending.';
+    return;
+  }
+
+  let body = 'Hi, I would like to get in touch with Aquamarine Distribution.' + String.fromCharCode(10) + String.fromCharCode(10);
+  body += 'Name: ' + firstName + (lastName ? ' ' + lastName : '') + String.fromCharCode(10);
+  body += 'Email: ' + email + String.fromCharCode(10);
+  if (island) body += 'Country / Island: ' + island + String.fromCharCode(10);
+  if (interest) body += 'Product Interest: ' + interest + String.fromCharCode(10);
+  body += String.fromCharCode(10) + 'Message:' + String.fromCharCode(10) + message + String.fromCharCode(10);
+
+  const subject = 'Website Enquiry' + (firstName ? ' — ' + firstName + (lastName ? ' ' + lastName : '') : '');
+  const mailto = 'mailto:info@aquamarinedistributions.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+
+  // Same approach as the Dock Builder's Request Quote: a temporary anchor click is
+  // the most broadly compatible way to trigger the mail client, with a clipboard
+  // copy as a guaranteed fallback so the enquiry still gets through for everyone.
+  try {
+    const link = document.createElement('a');
+    link.href = mailto;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (e) { /* ignore — clipboard fallback below still runs */ }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(body).catch(function () {});
+  }
+
+  if (statusEl) {
+    statusEl.textContent = 'Opening your email app. If nothing opens, your message was copied — please email info@aquamarinedistributions.com';
+  }
+}
+window.sendEnquiry = sendEnquiry;
 </script>
 
 <script>
